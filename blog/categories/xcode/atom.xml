@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[lesscome]]></title>
-  <link href="http://lesscome.github.io/atom.xml" rel="self"/>
+  <title><![CDATA[Category: Xcode | lesscome]]></title>
+  <link href="http://lesscome.github.io/blog/categories/xcode/atom.xml" rel="self"/>
   <link href="http://lesscome.github.io/"/>
   <updated>2014-12-16T23:24:03+08:00</updated>
   <id>http://lesscome.github.io/</id>
