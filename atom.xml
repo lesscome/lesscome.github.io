@@ -4,7 +4,7 @@
   <title><![CDATA[lesscome]]></title>
   <link href="http://lesscome.github.io/atom.xml" rel="self"/>
   <link href="http://lesscome.github.io/"/>
-  <updated>2014-12-20T09:02:48+08:00</updated>
+  <updated>2014-12-27T16:35:11+08:00</updated>
   <id>http://lesscome.github.io/</id>
   <author>
     <name><![CDATA[lesscome]]></name>
@@ -12,6 +12,110 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Implicit Integer to Pointer Conversions]]></title>
+    <link href="http://lesscome.github.io/blog/2014/12/27/implicit-integer-to-pointer-conversions/"/>
+    <updated>2014-12-27T14:35:00+08:00</updated>
+    <id>http://lesscome.github.io/blog/2014/12/27/implicit-integer-to-pointer-conversions</id>
+    <content type="html"><![CDATA[<p>这篇写的是关于整型的隐式转换带来的一些语言层次的问题，问题的缘由是一个整型和指针类型的隐式转换带来的bug，由于指针的值本身也是整型，所以参数类型是整型的函数里，可以传入指针类型，如果没有明确的类型转换，那么这其实是一次整型和指针之间隐式转换。</p>
+
+<p>在默认的Xcode项目里，这种隐式转换在编译的时候会有警告信息，由于我们项目设置中的Implicit Integer to Pointer Conversions选项是NO，所以甚至连警告都没有，导致多次遇到像下面这样的bug。</p>
+
+<pre><code>NSString * _groupUin = @"123456789";
+
+...
+
+[[serviceFactoryInstance() getVideoChatService] startAudio:[_uin longLongValue] AccostType:ACCOSTTYPE_DISCUSSGROUP_TMP GroupID:_groupUin];
+
+...
+
+//method prototype
+
+- (int)startAudio:(unsigned long long)fruin AccostType:(int)accostType GroupID:(UInt64)groupID
+</code></pre>
+
+<p>很明显这里传入的不是“123456789”，而是_groupUin指向的地址值，由于连警告都没有，所以很容易出错，而且不易被发现，直到测试出bug。</p>
+
+<p>那么怎么解决这类问题呢，有几种办法：</p>
+
+<ol>
+<li>修改接口类型，把上面的UInt64类型改成UInt64*或者NSNumber，利用编译器的类型检查来解决问题，这可以解决把指针类型传入整型的问题，但是整型传给指针类型还是有问题。</li>
+<li>把.m文件改成.mm文件，因为ObjectC++的编译器类型检查更加严格，所以类似问题会编译期间报错，带来的负面是编译时间变长，这种方法通常用在“不得不”的情况下。</li>
+<li>把项目设置中的Implicit Integer to Pointer Conversions选项改为YES，好吧，终于有警告了，但是项目里的警告太多了，谁会在意这些细节呢。</li>
+<li>最后我选择的办法是在Other C Flags的编译选项里加上-Werror-int-conversion，让隐式的int转换报错。</li>
+</ol>
+
+
+<p>然后。。。接下来的几个小时里，我就一直在修改编译错误，有些还挺有意思的，拿出来分享下。</p>
+
+<p><strong>指针赋值给BOOL</strong></p>
+
+<pre><code>BOOL display = [subValueStateDic objectForKey:@"Display"];
+</code></pre>
+
+<p>subValueStateDic是一个字典类型，objectForKey会返回一个id类型，假设字典里的Display值为NO，执行完这条语句后，display有很大可能是YES，因为返回的是一个指针，显然这是个bug。但是请注意为什么说是<em>很大可能</em>，举个栗子可能更容易理解一点。</p>
+
+<pre><code>// pointer指向地址为0Xf0000000的地址
+if(pointer)
+{
+    // print yes
+}
+</code></pre>
+
+<p>执行这段会print yes吗，答案是不会，看下BOOL型的定义就明白了。</p>
+
+<pre><code>typedef signed char BOOL;
+</code></pre>
+
+<p>类型转换后BOOL型的值只拿到低位的值，所以是0，导致在指针不为空的情况下不会执行之后的语句，所以别偷懒，老老实实的写全了。</p>
+
+<pre><code>//正常写法
+if (pointer != nil)
+
+//很骚的写法
+if (!!pointer)
+</code></pre>
+
+<p>在回头看之前display的例子，正确的写法是</p>
+
+<pre><code>BOOL display = ((NSNumber*)[subValueStateDic objectForKey:@"Display"]).boolValue;
+</code></pre>
+
+<p><strong>参数类型哪去了</strong></p>
+
+<pre><code>int version = 20;
+[self creatFileManageTable:db withVersion:version];
+...
+- (void)creatFileManageTable:(FMDatabase*)db withVersion:version
+</code></pre>
+
+<p>在OC里方法原型里不写参数类型的话，编译器不会报错，会默认认为是id类型。</p>
+
+<p><strong>viewWithTag的参数</strong></p>
+
+<pre><code>UIView *view = [self.view viewWithTag:@"TITLE_BAR_LINE"];
+</code></pre>
+
+<p>viewWithTag的参数是整型。</p>
+
+<p><strong>指针误用</strong></p>
+
+<pre><code>[gestures enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
+        if ([obj isKindOfClass:[BackPanGesture class]]) {
+            isAdd = NO;
+            stop = YES;
+        }
+
+    }];
+</code></pre>
+
+<p>stop是指针，直接给指针赋值是修改指针指向的地址，应该先解引用再赋值。</p>
+
+<pre><code>*stop = YES;
+</code></pre>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Create a Command Line Tool Project on iOS in Xcode6]]></title>

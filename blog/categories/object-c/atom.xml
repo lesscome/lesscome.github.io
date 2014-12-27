@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
 
-  <title><![CDATA[Category: iOS | lesscome]]></title>
-  <link href="http://lesscome.github.io/blog/categories/ios/atom.xml" rel="self"/>
+  <title><![CDATA[Category: Object-c | lesscome]]></title>
+  <link href="http://lesscome.github.io/blog/categories/object-c/atom.xml" rel="self"/>
   <link href="http://lesscome.github.io/"/>
   <updated>2014-12-27T16:35:11+08:00</updated>
   <id>http://lesscome.github.io/</id>
@@ -114,22 +114,6 @@ if (!!pointer)
 
 <pre><code>*stop = YES;
 </code></pre>
-]]></content>
-  </entry>
-  
-  <entry>
-    <title type="html"><![CDATA[Create a Command Line Tool Project on iOS in Xcode6]]></title>
-    <link href="http://lesscome.github.io/blog/2014/12/16/create-a-command-line-tool-project-on-ios-in-xcode6/"/>
-    <updated>2014-12-16T22:15:00+08:00</updated>
-    <id>http://lesscome.github.io/blog/2014/12/16/create-a-command-line-tool-project-on-ios-in-xcode6</id>
-    <content type="html"><![CDATA[<p>在Xcode里创建项目时，默认选项里是没有为iOS平台创建command line
-tool类型的项目，但是有时候我们在调试一些语言特性的时候，希望建立一个最简单的项目，避免import ui库带来一些干扰.</p>
-
-<p>我的做法是创建一个simple view project，然后把和ui相关的代码全都删掉，包括依赖的framework，只留下main.m文件，然后调试通过就可以了。</p>
-
-<p>但这么做始终还是麻烦，一劳永逸的方法还是做一个项目模板，google一下，找到的都是针对Xcode4和5的，没办法花了点时间自己做了一个Xcode6的，放在github了，有需要的可以去下载，下完执行install.sh，这样就可以在Xcode6里创建iOS平台的command line tool project了。</p>
-
-<p><a href="https://github.com/lesscome33/XCode6_Project_Templates_iOS_CommandLineTool">Github: XCode6_Project_Templates_iOS_CommandLineTool</a></p>
 ]]></content>
   </entry>
   
