@@ -218,18 +218,18 @@ testFastARC`main at main.m:17:
 0x1043ebca2:  retq  
 </code></pre>
 
-<p>在这么一大坨中，重点观察callq指令，会发现编译器自动添加了一些retain和autorelease等，基本就是下面这个造型。</p>
+<p>在这么一大坨中，重点观察callq指令，会发现编译器自动添加了一些retain和autorelease等，基本就是下面这个造型，我在注释里标出了变化的部分。</p>
 
 <pre><code>A * test(){
     A * a = [[A alloc] init];
-    return [a autorelease];
+    return [a autorelease]; //+autorelease
 }
 
 int main(int argc, char *argv[])
 {
-    A * aa = [test() retain];
+    A * aa = [test() retain]; //+retain
     [aa go];
-    [aa release];
+    [aa release]; //+release
 }   
 </code></pre>
 
@@ -239,18 +239,20 @@ int main(int argc, char *argv[])
 
 <pre><code>A * test(){
     A * a = [[A alloc] init];
-    return a;
+    return a; //-autorelease
 }
 
 int main(int argc, char *argv[])
 {
-    A * aa = test();
+    A * aa = test(); //-retain
     [aa go];
     [aa release];
 }   
 </code></pre>
 
-<p>这里面我比较感兴趣的技术是运行时检测将要运行的方法，于是查了一下，这段代码可以在object-c runtime的开源项目里找到，地址是<a href="http://www.opensource.apple.com/source/objc4/objc4-532/runtime/NSObject.mm">http://www.opensource.apple.com/source/objc4/objc4-532/runtime/NSObject.mm</a>，最关键的两个方法列在下面了，其中__builtin_return_address是得到当前方法的地址，然后去找下面指令的symbol，跟objc_retainAutoreleasedReturnValue比较，这样来判断下面要运行的方法是不是想要的。</p>
+<p>因为避免把对象加到autorelease pool的操作，所以理论上这个优化使得用到fast autorelease的代码比MRC的要快。</p>
+
+<p>另外我比较感兴趣的技术是运行时检测将要运行的方法，于是查了一下，这段代码可以在object-c runtime的开源项目里找到，地址是<a href="http://www.opensource.apple.com/source/objc4/objc4-532/runtime/NSObject.mm">http://www.opensource.apple.com/source/objc4/objc4-532/runtime/NSObject.mm</a>，最关键的两个方法列在下面了，其中__builtin_return_address是得到当前方法的地址，然后去找下面指令的symbol，跟objc_retainAutoreleasedReturnValue比较，这样来判断下面要运行的方法是不是想要的。</p>
 
 <pre><code>- (id)autorelease
 __attribute__((aligned(16)))
