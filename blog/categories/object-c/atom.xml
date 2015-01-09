@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Object-c | lesscome]]></title>
   <link href="http://lesscome.github.io/blog/categories/object-c/atom.xml" rel="self"/>
   <link href="http://lesscome.github.io/"/>
-  <updated>2014-12-27T16:35:11+08:00</updated>
+  <updated>2015-01-09T23:18:45+08:00</updated>
   <id>http://lesscome.github.io/</id>
   <author>
     <name><![CDATA[lesscome]]></name>
@@ -18,7 +18,7 @@
     <link href="http://lesscome.github.io/blog/2014/12/27/implicit-integer-to-pointer-conversions/"/>
     <updated>2014-12-27T14:35:00+08:00</updated>
     <id>http://lesscome.github.io/blog/2014/12/27/implicit-integer-to-pointer-conversions</id>
-    <content type="html"><![CDATA[<p>这篇写的是关于整型的隐式转换带来的一些语言层次的问题，问题的缘由是一个整型和指针类型的隐式转换带来的bug，由于指针的值本身也是整型，所以参数类型是整型的函数里，可以传入指针类型，如果没有明确的类型转换，那么这其实是一次整型和指针之间隐式转换。</p>
+    <content type="html"><![CDATA[<p>这篇写的是关于整型的隐式转换带来的一些在语言层面的问题，问题的缘由是一个整型和指针类型的隐式转换带来的bug，由于指针的值本身也是整型，所以参数类型是整型的函数里，可以传入指针类型，如果没有明确的类型转换，那么这其实是一次整型和指针之间隐式转换。</p>
 
 <p>在默认的Xcode项目里，这种隐式转换在编译的时候会有警告信息，由于我们项目设置中的Implicit Integer to Pointer Conversions选项是NO，所以甚至连警告都没有，导致多次遇到像下面这样的bug。</p>
 

@@ -2,7 +2,7 @@
 <html class="no-js" lang="en">
 <head>
   <meta charset="utf-8">
-  <title>lesscome</title>
+  <title>Fast Autorelease - lesscome</title>
   <meta name="author" content="lesscome">
 
   
@@ -14,15 +14,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://lesscome.github.io/blog">
+  <link rel="canonical" href="http://lesscome.github.io/blog/2015/01/09/fast-autorelease">
   <link href="/favicon.png" type="image/png" rel="icon">
   <link href="/atom.xml" rel="alternate" title="lesscome" type="application/atom+xml">
 
   <!-- http://opengraphprotocol.org/ -->
   <meta name="twitter:card" content="summary_large_image">
   <meta property="og:type" content="website">
-  <meta property="og:url" content="http://lesscome.github.io/blog">
-  <meta property="og:title" content="lesscome">
+  <meta property="og:url" content="http://lesscome.github.io/blog/2015/01/09/fast-autorelease">
+  <meta property="og:title" content="Fast Autorelease - lesscome">
   
 
   <script src="/javascripts/libs/jquery/jquery-2.0.3.min.js"></script>
@@ -66,7 +66,7 @@
 
         <div class="navbar-collapse collapse">
             <ul class="nav navbar-nav">
-                <li >
+                <li class="active">
                     <a rel="index" href="/">Blog</a>
                 </li>
                 <li >
@@ -100,58 +100,43 @@
       </header>
       <div id="main" role="main" class="container">
         <div id="content">
-            
-  
-  
-  <article class="listing">
-    <header>
-  
-  <h1 class="beta">
-    <a href="/blog/2015/01/09/fast-autorelease/">fast autorelease</a>
-  </h1>
-  
-
-  
-  <div class="meta clearfix">
+          <div class="row">
+  <div class="page-content col-md-9" itemscope itemtype="http://schema.org/Blog">
+    <meta itemprop="name" content="lesscome" />
     
-
-
-
-
-
-
-
-
-  
-
-
-<time class="pull-left" datetime="2015-01-09T21:30:00+08:00" pubdate data-updated="true"><i class="icon-calendar"></i> Jan 9<span>th</span>, 2015</time>
-    
-
-  <div class="pull-left">
-    <i class="icon-tags"></i>
-    <ul class="tags unstyled">
-    
+    <meta itemprop="url" content="http://lesscome.github.io" />
+    <article class="hentry" role="article" itemprop="blogPost" itemscope itemtype="http://schema.org/BlogPosting">
       
-        <li><a class='category' href='/blog/categories/arc/'>arc</a></li>
-      
-        <li><a class='category' href='/blog/categories/autorelease/'>autorelease</a></li>
-      
-        <li><a class='category' href='/blog/categories/ios/'>ios</a></li>
-      
+  <header class="page-header">
     
-    </ul>
-  </div>
+      <p class="meta text-muted text-uppercase">
+        
 
+
+
+
+
+
+
+
+
+
+
+
+<span class="glyphicon glyphicon-calendar"></span> <time datetime="2015-01-09T21:30:00+08:00"  data-updated="true" itemprop="datePublished dateCreated">ordinal</time>
+        
+      </p>
     
-  </div>
-  
-</header>
+    
+    <h1 class="entry-title" itemprop="name headline">
+        Fast Autorelease
+        
+    </h1>
+    
+  </header>
 
 
-
-
-  <p>接触过ARC的想必对下面这幅图不会很陌生，一图胜千言，指出了ARC的本质：通过在编译期间自动插入内存管理的相关代码来代替原本由手工添加的工作。
+<div class="entry-content clearfix" itemprop="articleBody description"><p>接触过ARC的想必对下面这幅图不会很陌生，一图胜千言，指出了ARC的本质：通过在编译期间自动插入内存管理的相关代码来代替原本由手工添加的工作。
 <img src="https://developer.apple.com/library/mac/releasenotes/ObjectiveC/RN-TransitioningToARC/Art/ARC_Illustration.jpg" alt="alt arc" /></p>
 
 <p>除此之外，编译器还会做一定的优化，比如本文将要介绍的fast autorelease特性。</p>
@@ -309,229 +294,92 @@ static bool callerAcceptsFastAutorelease(const void * const ra0)
     return true;
 }
 </code></pre>
+</div>
 
 
-  </article>
-  <hr>
-  
-  
-  <article class="listing">
-    <header>
-  
-  <h1 class="beta">
-    <a href="/blog/2014/12/27/implicit-integer-to-pointer-conversions/">Implicit Integer to Pointer Conversions</a>
-  </h1>
+      <footer>
+        <p class="meta text-muted">
+          
   
 
+<span class="glyphicon glyphicon-user"></span> <span class="byline author vcard" itemprop="author" itemscope itemtype="http://schema.org/Person">Posted by <span class="fn" itemprop="name">lesscome</span></span>
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+<span class="glyphicon glyphicon-calendar"></span> <time datetime="2015-01-09T21:30:00+08:00"  data-updated="true" itemprop="datePublished dateCreated">ordinal</time>
+          
+
+<span class="glyphicon glyphicon-tags"></span>&nbsp;
+<span class="categories">
   
-  <div class="meta clearfix">
-    
-
-
-
-
-
-
-
-
+    <a class='category' href='/blog/categories/arc/'>arc</a>, <a class='category' href='/blog/categories/autorelease/'>autorelease</a>, <a class='category' href='/blog/categories/ios/'>ios</a>
   
+</span>
 
 
-<time class="pull-left" datetime="2014-12-27T14:35:00+08:00" pubdate data-updated="true"><i class="icon-calendar"></i> Dec 27<span>th</span>, 2014</time>
-    
-
-  <div class="pull-left">
-    <i class="icon-tags"></i>
-    <ul class="tags unstyled">
-    
-      
-        <li><a class='category' href='/blog/categories/ios/'>iOS</a></li>
-      
-        <li><a class='category' href='/blog/categories/object-c/'>object-c</a></li>
-      
-        <li><a class='category' href='/blog/categories/pitfalls/'>pitfalls</a></li>
-      
-    
-    </ul>
-  </div>
-
-    
-  </div>
+        </p>
+        
+          <div class="sharing">
   
-</header>
-
-
-
-
-  <p>这篇写的是关于整型的隐式转换带来的一些在语言层面的问题，问题的缘由是一个整型和指针类型的隐式转换带来的bug，由于指针的值本身也是整型，所以参数类型是整型的函数里，可以传入指针类型，如果没有明确的类型转换，那么这其实是一次整型和指针之间隐式转换。</p>
-
-<p>在默认的Xcode项目里，这种隐式转换在编译的时候会有警告信息，由于我们项目设置中的Implicit Integer to Pointer Conversions选项是NO，所以甚至连警告都没有，导致多次遇到像下面这样的bug。</p>
-
-<pre><code>NSString * _groupUin = @"123456789";
-
-...
-
-[[serviceFactoryInstance() getVideoChatService] startAudio:[_uin longLongValue] AccostType:ACCOSTTYPE_DISCUSSGROUP_TMP GroupID:_groupUin];
-
-...
-
-//method prototype
-
-- (int)startAudio:(unsigned long long)fruin AccostType:(int)accostType GroupID:(UInt64)groupID
-</code></pre>
-
-<p>很明显这里传入的不是“123456789”，而是_groupUin指向的地址值，由于连警告都没有，所以很容易出错，而且不易被发现，直到测试出bug。</p>
-
-<p>那么怎么解决这类问题呢，有几种办法：</p>
-
-<ol>
-<li>修改接口类型，把上面的UInt64类型改成UInt64*或者NSNumber，利用编译器的类型检查来解决问题，这可以解决把指针类型传入整型的问题，但是整型传给指针类型还是有问题。</li>
-<li>把.m文件改成.mm文件，因为ObjectC++的编译器类型检查更加严格，所以类似问题会编译期间报错，带来的负面是编译时间变长，这种方法通常用在“不得不”的情况下。</li>
-<li>把项目设置中的Implicit Integer to Pointer Conversions选项改为YES，好吧，终于有警告了，但是项目里的警告太多了，谁会在意这些细节呢。</li>
-<li>最后我选择的办法是在Other C Flags的编译选项里加上-Werror-int-conversion，让隐式的int转换报错。</li>
-</ol>
-
-
-<p>然后。。。接下来的几个小时里，我就一直在修改编译错误，有些还挺有意思的，拿出来分享下。</p>
-
-<p><strong>指针赋值给BOOL</strong></p>
-
-<pre><code>BOOL display = [subValueStateDic objectForKey:@"Display"];
-</code></pre>
-
-<p>subValueStateDic是一个字典类型，objectForKey会返回一个id类型，假设字典里的Display值为NO，执行完这条语句后，display有很大可能是YES，因为返回的是一个指针，显然这是个bug。但是请注意为什么说是<em>很大可能</em>，举个栗子可能更容易理解一点。</p>
-
-<pre><code>// pointer指向地址为0Xf0000000的地址
-if(pointer)
-{
-    // print yes
-}
-</code></pre>
-
-<p>执行这段会print yes吗，答案是不会，看下BOOL型的定义就明白了。</p>
-
-<pre><code>typedef signed char BOOL;
-</code></pre>
-
-<p>类型转换后BOOL型的值只拿到低位的值，所以是0，导致在指针不为空的情况下不会执行之后的语句，所以别偷懒，老老实实的写全了。</p>
-
-<pre><code>//正常写法
-if (pointer != nil)
-
-//很骚的写法
-if (!!pointer)
-</code></pre>
-
-<p>在回头看之前display的例子，正确的写法是</p>
-
-<pre><code>BOOL display = ((NSNumber*)[subValueStateDic objectForKey:@"Display"]).boolValue;
-</code></pre>
-
-<p><strong>参数类型哪去了</strong></p>
-
-<pre><code>int version = 20;
-[self creatFileManageTable:db withVersion:version];
-...
-- (void)creatFileManageTable:(FMDatabase*)db withVersion:version
-</code></pre>
-
-<p>在OC里方法原型里不写参数类型的话，编译器不会报错，会默认认为是id类型。</p>
-
-<p><strong>viewWithTag的参数</strong></p>
-
-<pre><code>UIView *view = [self.view viewWithTag:@"TITLE_BAR_LINE"];
-</code></pre>
-
-<p>viewWithTag的参数是整型。</p>
-
-<p><strong>指针误用</strong></p>
-
-<pre><code>[gestures enumerateObjectsUsingBlock:^(id obj, NSUInteger idx, BOOL *stop) {
-        if ([obj isKindOfClass:[BackPanGesture class]]) {
-            isAdd = NO;
-            stop = YES;
-        }
-
-    }];
-</code></pre>
-
-<p>stop是指针，直接给指针赋值是修改指针指向的地址，应该先解引用再赋值。</p>
-
-<pre><code>*stop = YES;
-</code></pre>
-
-
-  </article>
-  <hr>
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="http://lesscome.github.io/blog/2015/01/09/fast-autorelease/" data-via="" data-counturl="http://lesscome.github.io/blog/2015/01/09/fast-autorelease/" >Tweet</a>
   
   
-  <article class="listing">
-    <header>
   
-  <h1 class="beta">
-    <a href="/blog/2014/12/16/create-a-command-line-tool-project-on-ios-in-xcode6/">create a command line tool project on iOS in Xcode6</a>
-  </h1>
-  
+</div>
 
-  
-  <div class="meta clearfix">
-    
-
-
-
-
-
-
-
-
-  
-
-
-<time class="pull-left" datetime="2014-12-16T22:15:00+08:00" pubdate data-updated="true"><i class="icon-calendar"></i> Dec 16<span>th</span>, 2014</time>
-    
-
-  <div class="pull-left">
-    <i class="icon-tags"></i>
-    <ul class="tags unstyled">
-    
-      
-        <li><a class='category' href='/blog/categories/xcode/'>Xcode</a></li>
-      
-        <li><a class='category' href='/blog/categories/command-line-tool/'>command line tool</a></li>
-      
-        <li><a class='category' href='/blog/categories/ios/'>iOS</a></li>
-      
-    
-    </ul>
-  </div>
-
+        
+        
+          <ul class="meta text-muted pager">
+            
+            <li class="previous"><a href="/blog/2014/12/27/implicit-integer-to-pointer-conversions/" title="Previous Post: Implicit Integer to Pointer Conversions">&laquo; Implicit Integer to Pointer Conversions</a></li>
+            
+            
+          </ul>
+        
+      </footer>
+    </article>
     
   </div>
+
   
-</header>
-
-
-
-
-  <p>在Xcode里创建项目时，默认选项里是没有为iOS平台创建command line
-tool类型的项目，但是有时候我们在调试一些语言特性的时候，希望建立一个最简单的项目，避免import ui库带来一些干扰.</p>
-
-<p>我的做法是创建一个simple view project，然后把和ui相关的代码全都删掉，包括依赖的framework，只留下main.m文件，然后调试通过就可以了。</p>
-
-<p>但这么做始终还是麻烦，一劳永逸的方法还是做一个项目模板，google一下，找到的都是针对Xcode4和5的，没办法花了点时间自己做了一个Xcode6的，放在github了，有需要的可以去下载，下完执行install.sh，这样就可以在Xcode6里创建iOS平台的command line tool project了。</p>
-
-<p><a href="https://github.com/lesscome33/XCode6_Project_Templates_iOS_CommandLineTool">Github: XCode6_Project_Templates_iOS_CommandLineTool</a></p>
-
-
-  </article>
-  <hr>
-  
-
-  <div class="pagination">
+  <aside class="sidebar col-md-3">
     
-
+      <section class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Recent Posts</h3>
+  </div>
+  
+  <div id="recent_posts" class="list-group">
+    
+    <a class="list-group-item active" href="/blog/2015/01/09/fast-autorelease/">Fast Autorelease</a>
+    
+    <a class="list-group-item " href="/blog/2014/12/27/implicit-integer-to-pointer-conversions/">Implicit Integer to Pointer Conversions</a>
+    
+    <a class="list-group-item " href="/blog/2014/12/16/create-a-command-line-tool-project-on-ios-in-xcode6/">Create a Command Line Tool Project on iOS in Xcode6</a>
     
   </div>
+</section>
+
+
+
+
+
+
+    
+  </aside>
+  
+</div>
 
         </div>
       </div>

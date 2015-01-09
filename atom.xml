@@ -4,7 +4,7 @@
   <title><![CDATA[lesscome]]></title>
   <link href="http://lesscome.github.io/atom.xml" rel="self"/>
   <link href="http://lesscome.github.io/"/>
-  <updated>2014-12-27T16:35:11+08:00</updated>
+  <updated>2015-01-09T23:18:45+08:00</updated>
   <id>http://lesscome.github.io/</id>
   <author>
     <name><![CDATA[lesscome]]></name>
@@ -14,11 +14,177 @@
 
   
   <entry>
+    <title type="html"><![CDATA[Fast Autorelease]]></title>
+    <link href="http://lesscome.github.io/blog/2015/01/09/fast-autorelease/"/>
+    <updated>2015-01-09T21:30:00+08:00</updated>
+    <id>http://lesscome.github.io/blog/2015/01/09/fast-autorelease</id>
+    <content type="html"><![CDATA[<p>接触过ARC的想必对下面这幅图不会很陌生，一图胜千言，指出了ARC的本质：通过在编译期间自动插入内存管理的相关代码来代替原本由手工添加的工作。
+<img src="https://developer.apple.com/library/mac/releasenotes/ObjectiveC/RN-TransitioningToARC/Art/ARC_Illustration.jpg" alt="alt arc" /></p>
+
+<p>除此之外，编译器还会做一定的优化，比如本文将要介绍的fast autorelease特性。</p>
+
+<pre><code>A * test(){
+    A * a = [[A alloc] init];
+    return a;
+}
+
+int main(int argc, char *argv[])
+{
+    [test() go];
+}
+</code></pre>
+
+<p>写了个简单demo，看下编译器添加了什么代码，debug后查看汇编代码</p>
+
+<pre><code>testFastARC`test at main.m:11:
+0x1043ebbf0:  pushq  %rbp
+0x1043ebbf1:  movq   %rsp, %rbp
+0x1043ebbf4:  subq   $0x20, %rsp
+0x1043ebbf8:  movq   0x521(%rip), %rdi         ; (void *)0x00000001043ec150
+0x1043ebbff:  movq   0x502(%rip), %rsi         ; "alloc"
+0x1043ebc06:  movq   0x3f3(%rip), %rax         ; (void *)0x0000000104921000: objc_msgSend
+0x1043ebc0d:  movq   %rax, -0x18(%rbp)
+0x1043ebc11:  callq  *%rax
+0x1043ebc13:  movq   0x4f6(%rip), %rsi         ; "init"
+0x1043ebc1a:  movq   %rax, %rdi
+0x1043ebc1d:  movq   -0x18(%rbp), %rax
+0x1043ebc21:  callq  *%rax
+0x1043ebc23:  movq   %rax, -0x8(%rbp)
+0x1043ebc27:  movq   0x3da(%rip), %rsi         ; (void *)0x000000010491e930: objc_retain
+0x1043ebc2e:  movq   %rax, %rdi
+0x1043ebc31:  callq  *%rsi
+0x1043ebc33:  movl   $0x1, -0xc(%rbp)
+0x1043ebc3a:  xorl   %ecx, %ecx
+0x1043ebc3c:  movl   %ecx, %esi
+0x1043ebc3e:  leaq   -0x8(%rbp), %rdi
+0x1043ebc42:  movq   %rax, -0x20(%rbp)
+0x1043ebc46:  callq  0x1043ebcbc               ; symbol stub for: objc_storeStrong
+0x1043ebc4b:  movq   -0x20(%rbp), %rdi
+0x1043ebc4f:  addq   $0x20, %rsp
+0x1043ebc53:  popq   %rbp
+0x1043ebc54:  jmp    0x1043ebca4               ; symbol stub for: objc_autoreleaseReturnValue
+
+testFastARC`main at main.m:17:
+0x1043ebc60:  pushq  %rbp
+0x1043ebc61:  movq   %rsp, %rbp
+0x1043ebc64:  subq   $0x20, %rsp
+0x1043ebc68:  movl   %edi, -0x4(%rbp)
+0x1043ebc6b:  movq   %rsi, -0x10(%rbp)
+0x1043ebc6f:  callq  0x1043ebbf0               ; test at main.m:11
+0x1043ebc74:  movq   %rax, %rdi
+0x1043ebc77:  callq  0x1043ebcb6               ; symbol stub for: objc_retainAutoreleasedReturnValue
+0x1043ebc7c:  movq   0x495(%rip), %rsi         ; "go"
+0x1043ebc83:  movq   %rax, %rdi
+0x1043ebc86:  movq   %rax, -0x18(%rbp)
+0x1043ebc8a:  callq  0x1043ebcaa               ; symbol stub for: objc_msgSend
+0x1043ebc8f:  movq   -0x18(%rbp), %rdi
+0x1043ebc93:  callq  0x1043ebcb0               ; symbol stub for: objc_release
+0x1043ebc98:  movl   $0x0, %eax
+0x1043ebc9d:  addq   $0x20, %rsp
+0x1043ebca1:  popq   %rbp
+0x1043ebca2:  retq  
+</code></pre>
+
+<p>在这么一大坨中，重点观察callq指令，会发现编译器自动添加了一些retain和autorelease等，基本就是下面这个造型。</p>
+
+<pre><code>A * test(){
+    A * a = [[A alloc] init];
+    return [a autorelease];
+}
+
+int main(int argc, char *argv[])
+{
+    A * aa = [test() retain];
+    [aa go];
+    [aa release];
+}   
+</code></pre>
+
+<p>如果在MRC下，大家多半都不会这么写，在调用之前retain，调用完release。ARC会添加两条冗余代码，苹果的工程师怎么能忍，于是他们想出了一个名为fast autorelease的招。</p>
+
+<p><strong>fast autorelease的原理是autorelease的方法里面会在运行时检测调用者的代码，如果发现有objc_retainAutoreleasedReturnValue方法，就不再把对象加到autorelease pool里，而是把对象存到线程局部存储里。然后调用方通过objc_retainAutoreleasedReturnValue方法先检查线程局部存储里有没有包含这个对象，如果有则不再retain，这段代码就变成下面这样。</strong></p>
+
+<pre><code>A * test(){
+    A * a = [[A alloc] init];
+    return a;
+}
+
+int main(int argc, char *argv[])
+{
+    A * aa = test();
+    [aa go];
+    [aa release];
+}   
+</code></pre>
+
+<p>这里面我比较感兴趣的技术是运行时检测将要运行的方法，于是查了一下，这段代码可以在object-c runtime的开源项目里找到，地址是<a href="http://www.opensource.apple.com/source/objc4/objc4-532/runtime/NSObject.mm">http://www.opensource.apple.com/source/objc4/objc4-532/runtime/NSObject.mm</a>，最关键的两个方法列在下面了，其中__builtin_return_address是得到当前方法的地址，然后去找下面指令的symbol，跟objc_retainAutoreleasedReturnValue比较，这样来判断下面要运行的方法是不是想要的。</p>
+
+<pre><code>- (id)autorelease
+__attribute__((aligned(16)))
+{
+    // no tag check here: tagged pointers DO use fast autoreleasing
+
+#if SUPPORT_RETURN_AUTORELEASE
+assert(tls_get_direct(AUTORELEASE_POOL_RECLAIM_KEY) == NULL);
+
+    if (callerAcceptsFastAutorelease(__builtin_return_address(0))) {
+        tls_set_direct(AUTORELEASE_POOL_RECLAIM_KEY, self);
+        return self;
+    }
+#endif
+    return _objc_rootAutorelease2(self);
+}
+
+static bool callerAcceptsFastAutorelease(const void * const ra0)
+{
+    const uint8_t *ra1 = (const uint8_t *)ra0;
+    const uint16_t *ra2;
+    const uint32_t *ra4 = (const uint32_t *)ra1;
+    const void **sym;
+
+#define PREFER_GOTPCREL 0
+#if PREFER_GOTPCREL
+    // 48 89 c7    movq  %rax,%rdi
+    // ff 15       callq *symbol@GOTPCREL(%rip)
+    if (*ra4 != 0xffc78948) {
+        return false;
+    }
+    if (ra1[4] != 0x15) {
+        return false;
+    }
+    ra1 += 3;
+#else
+    // 48 89 c7    movq  %rax,%rdi
+    // e8          callq symbol
+    if (*ra4 != 0xe8c78948) {
+        return false;
+    }
+    ra1 += (long)*(const int32_t *)(ra1 + 4) + 8l;
+    ra2 = (const uint16_t *)ra1;
+    // ff 25       jmpq *symbol@DYLDMAGIC(%rip)
+    if (*ra2 != 0x25ff) {
+        return false;
+    }
+#endif
+    ra1 += 6l + (long)*(const int32_t *)(ra1 + 2);
+    sym = (const void **)ra1;
+    if (*sym != objc_retainAutoreleasedReturnValue)
+    {
+        return false;
+    }
+
+    return true;
+}
+</code></pre>
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[Implicit Integer to Pointer Conversions]]></title>
     <link href="http://lesscome.github.io/blog/2014/12/27/implicit-integer-to-pointer-conversions/"/>
     <updated>2014-12-27T14:35:00+08:00</updated>
     <id>http://lesscome.github.io/blog/2014/12/27/implicit-integer-to-pointer-conversions</id>
-    <content type="html"><![CDATA[<p>这篇写的是关于整型的隐式转换带来的一些语言层次的问题，问题的缘由是一个整型和指针类型的隐式转换带来的bug，由于指针的值本身也是整型，所以参数类型是整型的函数里，可以传入指针类型，如果没有明确的类型转换，那么这其实是一次整型和指针之间隐式转换。</p>
+    <content type="html"><![CDATA[<p>这篇写的是关于整型的隐式转换带来的一些在语言层面的问题，问题的缘由是一个整型和指针类型的隐式转换带来的bug，由于指针的值本身也是整型，所以参数类型是整型的函数里，可以传入指针类型，如果没有明确的类型转换，那么这其实是一次整型和指针之间隐式转换。</p>
 
 <p>在默认的Xcode项目里，这种隐式转换在编译的时候会有警告信息，由于我们项目设置中的Implicit Integer to Pointer Conversions选项是NO，所以甚至连警告都没有，导致多次遇到像下面这样的bug。</p>
 
