@@ -4,7 +4,7 @@
   <title><![CDATA[lesscome]]></title>
   <link href="http://lesscome.github.io/atom.xml" rel="self"/>
   <link href="http://lesscome.github.io/"/>
-  <updated>2015-01-09T23:26:28+08:00</updated>
+  <updated>2015-01-11T17:47:16+08:00</updated>
   <id>http://lesscome.github.io/</id>
   <author>
     <name><![CDATA[lesscome]]></name>
@@ -18,10 +18,9 @@
     <link href="http://lesscome.github.io/blog/2015/01/09/fast-autorelease/"/>
     <updated>2015-01-09T21:30:00+08:00</updated>
     <id>http://lesscome.github.io/blog/2015/01/09/fast-autorelease</id>
-    <content type="html"><![CDATA[<p>接触过ARC的想必对下面这幅图不会很陌生，一图胜千言，指出了ARC的本质：通过在编译期间自动插入内存管理的相关代码来代替原本由手工添加的工作。
-<img src="https://developer.apple.com/library/mac/releasenotes/ObjectiveC/RN-TransitioningToARC/Art/ARC_Illustration.jpg" alt="alt arc" /></p>
+    <content type="html"><![CDATA[<p>我们知道ARC的原理是在编译期间智能的插入相关代码来管理内存，“智能插入”对应用层的开发人员来说就像一个黑盒子，隐藏了很多有意思的细节，编译器到底有多智能呢，能做到和手动管理内存一样高效吗？</p>
 
-<p>除此之外，编译器还会做一定的优化，比如本文将要介绍的fast autorelease特性。</p>
+<p>先看下面这个demo，很简单的例子，test方法返回一个A的实例，main函数里在调用这个对象的go方法。</p>
 
 <pre><code>A * test(){
     A * a = [[A alloc] init];
@@ -34,7 +33,7 @@ int main(int argc, char *argv[])
 }
 </code></pre>
 
-<p>写了个简单demo，看下编译器添加了什么代码，debug后查看汇编代码</p>
+<p>我们想看下编译器到底添加了哪些代码，一个简单的办法是，打断点后debug查看汇编代码，下面是我在模拟器上运行的汇编代码，用的是x86-64指令集。</p>
 
 <pre><code>testFastARC`test at main.m:11:
 0x1043ebbf0:  pushq  %rbp
@@ -85,7 +84,7 @@ testFastARC`main at main.m:17:
 0x1043ebca2:  retq  
 </code></pre>
 
-<p>在这么一大坨中，重点观察callq指令，会发现编译器自动添加了一些retain和autorelease等，基本就是下面这个造型，我在注释里标出了变化的部分。</p>
+<p>在这么一大坨中，只要重点观察callq指令就好，会发现编译器自动添加了一些retain和autorelease等，在翻译回oc代码，基本就是下面这个造型，我在注释里标出了变化的部分。</p>
 
 <pre><code>A * test(){
     A * a = [[A alloc] init];
@@ -100,9 +99,11 @@ int main(int argc, char *argv[])
 }   
 </code></pre>
 
-<p>如果在MRC下，大家多半都不会这么写，在调用之前retain，调用完release。ARC会添加两条冗余代码，苹果的工程师怎么能忍，于是他们想出了一个名为fast autorelease的招。</p>
+<p>可以看到，在main函数里，调用go方法之前，先retain，调用完之后马上release，这不是明显的冗余语句吗，因为在这个简单demo里，不可能有其他地方会release掉aa。我想在手动管理内存的情况下，应该没有人会这么写吧。</p>
 
-<p><strong>fast autorelease的原理是autorelease的方法里面会在运行时检测调用者的代码，如果发现有objc_retainAutoreleasedReturnValue方法，就不再把对象加到autorelease pool里，而是把对象存到线程局部存储里。然后调用方通过objc_retainAutoreleasedReturnValue方法先检查线程局部存储里有没有包含这个对象，如果有则不再retain，这段代码就变成下面这样。</strong></p>
+<p>看到这是不是不想用ARC了，稍等，是时候引出今天的主角了，那就是fast autorelease。看名字就知道这是个关于运行速度的优化，并且优化完的运行速度比手动管理内存还要快。</p>
+
+<p><strong>Fast Autorelease是个运行时的特性，它会在autorelease的方法里动态的检测调用者的代码，如果发现有objc_retainAutoreleasedReturnValue方法，就不再把对象加到autorelease pool里，而是把对象存到线程局部存储里。然后调用方通过objc_retainAutoreleasedReturnValue方法先检查线程局部存储里有没有包含这个对象，如果有则不再retain。</strong>通过这样的优化，上面那段代码实际上在运行时就变成下面这样。</p>
 
 <pre><code>A * test(){
     A * a = [[A alloc] init];
@@ -117,9 +118,9 @@ int main(int argc, char *argv[])
 }   
 </code></pre>
 
-<p>因为避免把对象加到autorelease pool的操作，所以理论上这个优化使得用到fast autorelease的代码比MRC的要快。</p>
+<p>因为避免了把对象加到autorelease pool的操作，所以理论上这个优化使得用到fast autorelease的代码比MRC的要快。</p>
 
-<p>另外我比较感兴趣的技术是运行时检测将要运行的方法，于是查了一下，这段代码可以在object-c runtime的开源项目里找到，地址是<a href="http://www.opensource.apple.com/source/objc4/objc4-532/runtime/NSObject.mm">http://www.opensource.apple.com/source/objc4/objc4-532/runtime/NSObject.mm</a>，最关键的两个方法列在下面了，其中__builtin_return_address是得到当前方法的地址，然后去找下面指令的symbol，跟objc_retainAutoreleasedReturnValue比较，这样来判断下面要运行的方法是不是想要的。</p>
+<p>另外我比较感兴趣的技术是运行时检测将要运行的方法，查了一下，这段代码可以在object-c runtime的开源项目里找到，地址是<a href="http://www.opensource.apple.com/source/objc4/objc4-532/runtime/NSObject.mm">http://www.opensource.apple.com/source/objc4/objc4-532/runtime/NSObject.mm</a>，最关键的两个方法列在下面了，其中__builtin_return_address是得到当前方法的地址，然后去找下面指令的symbol，跟objc_retainAutoreleasedReturnValue比较，这样来判断下面要运行的方法是不是想要的。好了，这就是我所知道的关于Fast Autorelease的细节，从这个特性的角度来看ARC还是很高效的。</p>
 
 <pre><code>- (id)autorelease
 __attribute__((aligned(16)))
