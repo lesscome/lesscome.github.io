@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: Objc | lesscome]]></title>
+  <link href="http://lesscome.github.io/blog/categories/objc/atom.xml" rel="self"/>
+  <link href="http://lesscome.github.io/"/>
+  <updated>2015-01-12T22:52:18+08:00</updated>
+  <id>http://lesscome.github.io/</id>
+  <author>
+    <name><![CDATA[lesscome]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Pitfalls of Performselector]]></title>
+    <link href="http://lesscome.github.io/blog/2015/01/12/pitfalls-of-performselector/"/>
+    <updated>2015-01-12T22:00:00+08:00</updated>
+    <id>http://lesscome.github.io/blog/2015/01/12/pitfalls-of-performselector</id>
+    <content type="html"><![CDATA[<p>接着上次隐式的int类型转换的话题说，项目里有这样的代码：</p>
+
+<pre><code>[a performSelector:@selector(test:) withObject:NO];
+
+//...
+-(void)test:(BOOL)aa{
+}
+</code></pre>
+
+<p>而performselector的原型是</p>
+
+<pre><code>- (id)performSelector:(SEL)aSelector withObject:(id)object;
+</code></pre>
+
+<p>于是随手就把NO改成@NO，结果出bug了，test方法里拿到的aa不是NO。于是用clang -rewrite-objc 命令输出C代码一探究竟。</p>
+
+<pre><code>// 用NO作为参数 对应的c代码
+((id (*)(id, SEL, ...))(void *)objc_msgSend)((id)a, sel_registerName("performSelector:withObject:"), sel_registerName("test:"), (int)((bool)0), 0);
+
+// 用@NO作为参数 对应的c代码
+ ((id (*)(id, SEL, SEL, id))(void *)objc_msgSend)((id)a, sel_registerName("performSelector:withObject:"), sel_registerName("test:"), (id)((NSNumber *(*)(id, SEL, BOOL))(void *)objc_msgSend)(objc_getClass("NSNumber"), sel_registerName("numberWithBool:"), (BOOL)false));
+</code></pre>
+
+<p>能看到两种写法的参数类型是不一样的，一个是int，另一个是id，也就是说虽然performselector的参数类型是id，当传入的是整型时，并没有被强转成id型，而是保留了整型的值，真是混乱。</p>
+
+<p>stackoverflow上有类似问题，<a href="http://stackoverflow.com/questions/904515/how-to-use-performselectorwithobjectafterdelay-with-primitive-types-in-cocoa">http://stackoverflow.com/questions/904515/how-to-use-performselectorwithobjectafterdelay-with-primitive-types-in-cocoa</a>，给出的建议是改用NSInvocation，这个是比较规范的写法，带来的不好地方是明显代码行数增加了，写起来也更复杂。</p>
+
+<p>另一个，<a href="http://stackoverflow.com/questions/7075620/iphone-performselector-with-bool-parameter">http://stackoverflow.com/questions/7075620/iphone-performselector-with-bool-parameter</a></p>
+
+<pre><code>The simplest way is as follows:
+
+If you have method
+
+-(void)doSomething:(BOOL)flag
+and want to performSelecor with flag=NO use
+
+[object performSelector:@selector(doSomething:) withObject:nil];
+In case of flag=YES you can send any object, for example, @YES - number from bool
+
+[object performSelector:@selector(doSomething:) withObject:@YES];
+Note: don't use @NO ! Only nil will be interpreted as NO in your method with bool argument.
+</code></pre>
+
+<p>这种改法是比较取巧的，NO的时候传nil，YES的时候传@YES，巧妙的越过了编译器检查，当然这种改法是有可能会出问题的，当@YES的地址低8位全是0的时候，被调用的方法里拿到的将是NO，所以还是建议用第一种方法，可以封装成NSObject的扩展类，用起来方便点。</p>
+
+<p>再附送两个坑，都是在研究这个问题的时候发现的。</p>
+
+<ol>
+<li><p>在MRC下，如果这么用[a performSelector:@selector(test:) withObject:NO afterDelay:0];运行时会crash。</p></li>
+<li><p>如果被perform的方法的返回值是一个struct，运行时会crash，详见<a href="http://www.tomdalling.com/blog/cocoa/why-performselector-is-more-dangerous-than-i-thought/">http://www.tomdalling.com/blog/cocoa/why-performselector-is-more-dangerous-than-i-thought/</a></p></li>
+</ol>
+
+]]></content>
+  </entry>
+  
+</feed>
